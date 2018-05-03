@@ -1,5 +1,8 @@
 import torch
 from .box import change_box_order
+import shapely
+from shapely.geometry import Polygon
+import numpy as np
 
 
 def bounding(quad_boxes, order='xyxy'):
@@ -31,3 +34,61 @@ def rec2quad(rec, order='xyxy'):
         rec = change_box_order(rec, 'xyhw2xyxy')
 
     return rec[:,[0,1,2,1,2,3,0,3]]
+
+
+def _signle_iou(poly1, poly2):
+    if not poly1.intersects(poly2): # this test is fast and can accelerate calculation
+        iou = 0.0
+    else:
+        try:
+            inter_area = poly1.intersection(poly2).area
+            union_area = poly1.area + poly2.area - inter_area
+            iou = float(inter_area) / union_area
+        except shapely.geos.TopologicalError:
+            print('shapely.geos.TopologicalError occured, iou set to 0')
+            iou = 0.0
+    return iou
+
+
+def quad_iou(quads1, quads2):
+    quads2_pol = [Polygon(item.reshape(4, 2)).convex_hull for item in quads2.numpy()]
+    def multi2one(item):
+        poly1 = Polygon(item.reshape(4, 2)).convex_hull
+        return [_signle_iou(poly1, poly2) for poly2 in quads2_pol]
+    ious = np.apply_along_axis(multi2one, axis=1, arr=quads1.numpy())
+    return torch.tensor(ious)
+
+
+def quad_nms(quads, scores, threshold):
+    '''Non maximum suppression.
+
+    Args:
+      bboxes: (tensor) bounding boxes, sized [N,8].
+      scores: (tensor) confidence scores, sized [N,].
+      threshold: (float) overlap threshold.
+
+    Returns:
+      keep: (tensor) selected indices.
+
+    Reference:
+      https://github.com/rbgirshick/py-faster-rcnn/blob/master/lib/nms/py_cpu_nms.py
+    '''
+    _, order = scores.sort(0, descending=True)
+    polys = [Polygon(item.reshape(4, 2)).convex_hull for item in quads.numpy()]
+    
+    keep = []
+    while order.numel() > 0: #Returns the total number of elements in the input tensor.
+        i = order[0]
+        keep.append(i)
+
+        if order.numel() == 1:
+            break
+
+        ovr = torch.tensor([_signle_iou(polys[i], polys[j]) for j in order[1:]])
+        ids = (ovr<=threshold).nonzero().squeeze()
+
+        if ids.numel() == 0:
+            break
+        order = order[ids+1] # add 1 because of i = order[0] already use order[0] and j begin at 1
+
+    return torch.LongTensor(keep)

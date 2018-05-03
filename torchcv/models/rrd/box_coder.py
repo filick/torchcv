@@ -5,7 +5,7 @@ import itertools
 
 from torchcv.utils import meshgrid
 from torchcv.utils.box import box_iou, box_nms, change_box_order
-from torchcv.utils.quadrilateral import bounding, rec2quad
+from torchcv.utils.quadrilateral import bounding, rec2quad, quad_nms
 
 
 class RRDBoxCoder:
@@ -85,9 +85,7 @@ class RRDBoxCoder:
         cls_targets[index<0] = 0
         return loc_targets, cls_targets
 
-    def decode(self, loc_preds, cls_preds, score_thresh=0.6, nms_thresh=0.45):
-        '''To do
-        '''
+    def decode(self, loc_preds, cls_preds, score_thresh=0.6, nms_thresh1=0.5, nms_thresh2=0.2):
         default_boxes = rec2quad(self.default_boxes, 'xywh')
         box_preds = self.default_boxes[:,2:].repeat(1,4) * loc_preds + default_boxes
 
@@ -102,11 +100,15 @@ class RRDBoxCoder:
                 continue
             box = box_preds[mask.nonzero().squeeze()]
             score = score[mask]
-
-            keep = box_nms(box, score, nms_thresh)
-            boxes.append(box[keep])
-            labels.append(torch.LongTensor(len(box[keep])).fill_(i))
-            scores.append(score[keep])
+            # stage 1
+            keep1 = box_nms(bounding(box), score, nms_thresh1)
+            box = box[keep1]
+            score = score[keep1]
+            # stage 2
+            keep2 = quad_nms(box, score, nms_thresh2)
+            boxes.append(box[keep2])
+            labels.append(torch.LongTensor(len(keep2)).fill_(i))
+            scores.append(score[keep2])
 
         boxes = torch.cat(boxes, 0)
         labels = torch.cat(labels, 0)
