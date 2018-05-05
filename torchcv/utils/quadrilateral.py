@@ -92,3 +92,27 @@ def quad_nms(quads, scores, threshold):
         order = order[ids+1] # add 1 because of i = order[0] already use order[0] and j begin at 1
 
     return torch.LongTensor(keep)
+
+
+def quad_clamp(quad, xmin, ymin, xmax, ymax):
+    '''Clamp boxes.
+
+    Args:
+      boxes: (tensor) bounding boxes of (x1,y1,x2,y2,x3,y3,x4,y4), sized [N,8].
+      xmin: (number) min value of x.
+      ymin: (number) min value of y.
+      xmax: (number) max value of x.
+      ymax: (number) max value of y.
+
+    Returns:
+      (tensor) clamped boxes.
+    '''
+    quad[:,0].clamp_(min=xmin, max=xmax)
+    quad[:,1].clamp_(min=ymin, max=ymax)
+    quad[:,2].clamp_(min=xmin, max=xmax)
+    quad[:,3].clamp_(min=ymin, max=ymax)
+    quad[:,4].clamp_(min=xmin, max=xmax)
+    quad[:,5].clamp_(min=ymin, max=ymax)
+    quad[:,6].clamp_(min=xmin, max=xmax)
+    quad[:,7].clamp_(min=ymin, max=ymax)
+    return quad

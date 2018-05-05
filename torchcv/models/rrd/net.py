@@ -116,7 +116,7 @@ class ORPooling(nn.Module):
         B, C, H, W = x.shape
         assert C % self.orientations == 0
         x = x.view(B, -1, self.orientations, H, W)
-        return x.max(2)
+        return x.max(2)[0]
 
 
 class RRD(nn.Module):
@@ -137,10 +137,7 @@ class RRD(nn.Module):
         self.loc_layers = nn.ModuleList()
         self.cls_layers = nn.ModuleList()
         for i in range(len(self.in_channels)):
-            self.or_sensitive.append(nn.Sequential(
-                ORConv2d(self.in_channels[i], self.in_channels[i], arf_config=(1,orientation), kernel_size=3, padding=1),
-                nn.ReLU(inplace=True) # do we need this?
-            ))
+            self.or_sensitive.append(ORConv2d(self.in_channels[i], self.in_channels[i], arf_config=(1,orientation), kernel_size=3, padding=1))
             self.loc_layers.append(nn.Conv2d(self.in_channels[i]*orientation, self.num_anchors[i]*8, kernel_size=3, padding=1))
             self.cls_layers.append(nn.Conv2d(self.in_channels[i], self.num_anchors[i]*self.num_classes, kernel_size=3, padding=1))
 
@@ -150,6 +147,7 @@ class RRD(nn.Module):
         xs = self.extractor(x)
         for i, x in enumerate(xs):
             ors = self.or_sensitive[i](x)
+            ors = nn.functional.relu(ors, inplace=True) # do we need this?
             loc_pred = self.loc_layers[i](ors)
             loc_pred = loc_pred.permute(0,2,3,1).contiguous()
             loc_preds.append(loc_pred.view(loc_pred.size(0),-1,8))
