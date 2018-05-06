@@ -20,7 +20,7 @@ from torch.autograd import Variable
 
 from torchcv.models.rrd import RRD, RRDBoxCoder
 
-from torchcv.loss import SSDLoss
+from torchcv.loss import RRDLoss
 from torchcv.datasets.textdataset import TextDataset
 from torchcv.transforms import resize_quad, random_distort, random_paste_quad, random_crop_quad, random_flip_quad
 
@@ -100,7 +100,7 @@ lr =1e-4
 momentum=0.9
 weight_decay=1e-4
 
-criterion = SSDLoss(num_classes=2)
+criterion = RRDLoss(num_classes=2)
 optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
 # Training
