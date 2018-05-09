@@ -5,7 +5,7 @@ This is a pytorch implementation of Rotation-Sensitive Regression Detector (RRD,
 ## TODO
 - [x] ORN in RRD
 - [ ] inception block in RRD
-- [ ] support multiple scale in RRD
+- [x] support multiple scale in RRD
 - [x] two-stage quadrilateral nms
 - [x] ground truth mapping
 - [x] data augmentation
