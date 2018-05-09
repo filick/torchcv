@@ -40,7 +40,7 @@ INPUT_WORKERS = 16
 
 # Model
 print('==> Building model..')
-net = RRD(num_classes=2)
+net = RRD(num_classes=2, input_size=img_size)
 #net = FPNSSD512(num_classes=2)
 #net.load_state_dict(torch.load(args.model))
 best_loss = float('inf')  # best test loss
@@ -102,28 +102,6 @@ weight_decay=1e-4
 
 criterion = RRDLoss(num_classes=2)
 optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
-
-# Training
-def train(epoch):
-    print('\nEpoch: %d' % epoch)
-    net.train()
-    train_loss = 0
-    for batch_idx, (inputs, loc_targets, cls_targets, names) in enumerate(trainloader):
-        #print(batch_idx/len(trainloader))
-        inputs = Variable(inputs.cuda())
-        loc_targets = Variable(loc_targets.cuda())
-        cls_targets = Variable(cls_targets.cuda())
-
-        optimizer.zero_grad()
-        loc_preds, cls_preds = net(inputs)
-
-        loss = criterion(loc_preds, loc_targets, cls_preds, cls_targets)
-        loss.backward()
-        optimizer.step()
-
-        train_loss += loss.data[0]
-        print('train_loss: %.3f | avg_loss: %.3f [%d/%d]'
-              % (loss.data[0], train_loss/(batch_idx+1), batch_idx+1, len(trainloader)))
 
 # Training
 def train(epoch):
