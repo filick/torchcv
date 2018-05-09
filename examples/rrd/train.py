@@ -25,7 +25,7 @@ from torchcv.datasets.textdataset import TextDataset
 from torchcv.transforms import resize_quad, random_distort, random_paste_quad, random_crop_quad, random_flip_quad
 
 
-img_size = 300
+img_size = 384
 batch_size = 32
 
 train_label_files = '/Users/filick/projects/text/data/ICPR_text_train_part2_20180313/txt_9000'

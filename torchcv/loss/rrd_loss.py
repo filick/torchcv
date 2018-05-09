@@ -64,6 +64,6 @@ class RRDLoss(nn.Module):
         neg, num_neg = self._hard_negative_mining(cls_loss, pos)  # [N,#anchors]
         cls_loss = cls_loss[pos|neg].sum()
 
-        print('loc_loss: %.3f | cls_loss: %.3f' % (loc_loss.item()/num_pos, cls_loss.item()/num_pos), end=' | ')
+        print('loc_loss: %.3f | cls_loss: %.3f' % (loc_loss.item()/(num_pos + num_neg), cls_loss.item()/(num_pos + num_neg)), end=' | ')
         loss = (alpha * loc_loss + cls_loss)/(num_pos + num_neg)
         return loss

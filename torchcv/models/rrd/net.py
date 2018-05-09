@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -120,16 +121,14 @@ class ORPooling(nn.Module):
 
 
 class RRD(nn.Module):
-    steps = (8, 16, 32, 64, 100, 300)
-    box_sizes = (30, 60, 111, 162, 213, 264, 315)  # default bounding box sizes for each feature map.
-    aspect_ratios = ((2,), (2,3), (2,3), (2,3), (2,), (2,))
-    fm_sizes = (38, 19, 10, 5, 3, 1)
+    aspect_ratios = ((2,3,5,7,9,15), (2,3,5,7,9), (2,3,5), (2,3), (2,), (2,))
 
-    def __init__(self, num_classes=2, orientation=8):
+    def __init__(self, num_classes=2, orientation=8, input_size=300):
         super(RRD, self).__init__()
         self.num_classes = num_classes
-        self.num_anchors = (4, 6, 6, 6, 4, 4)
+        self.num_anchors = tuple(len(a) * 2 + 2 for a in self.aspect_ratios)
         self.in_channels = (512, 1024, 512, 256, 256, 256)
+        self.set_size(input_size)
 
         self.extractor = VGG16Extractor300()
         self.or_sensitive = nn.ModuleList()
@@ -140,6 +139,29 @@ class RRD(nn.Module):
             self.or_sensitive.append(ORConv2d(self.in_channels[i], self.in_channels[i], arf_config=(1,orientation), kernel_size=3, padding=1))
             self.loc_layers.append(nn.Conv2d(self.in_channels[i]*orientation, self.num_anchors[i]*8, kernel_size=3, padding=1))
             self.cls_layers.append(nn.Conv2d(self.in_channels[i], self.num_anchors[i]*self.num_classes, kernel_size=3, padding=1))
+
+
+    def set_size(self, size):
+        self.size = size
+        self.box_sizes = tuple((0.2 + 0.14 * k) * size for k in range(7))
+        self.fm_sizes = []
+        fm = math.ceil(size / 2)
+        fm = math.ceil(fm / 2)
+        fm = math.ceil(fm / 2)
+        self.fm_sizes.append(fm)
+        fm = math.ceil(fm / 2)
+        self.fm_sizes.append(fm)
+        fm = math.floor((fm + 1) / 2)
+        self.fm_sizes.append(fm)
+        fm = math.floor((fm + 1) / 2)
+        self.fm_sizes.append(fm)
+        fm -= 2
+        self.fm_sizes.append(fm)
+        fm -= 2
+        self.fm_sizes.append(fm)
+        self.fm_sizes = tuple(self.fm_sizes)
+        self.steps = tuple(size/fm for fm in self.fm_sizes)
+
 
     def forward(self, x):
         loc_preds = []
