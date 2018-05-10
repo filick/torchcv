@@ -28,10 +28,10 @@ from torchcv.transforms import resize_quad, random_distort, random_paste_quad, r
 img_size = 384
 batch_size = 32
 
-train_label_files = '/Users/filick/projects/text/data/ICPR_text_train_part2_20180313/txt_9000'
-train_image_files = '/Users/filick/projects/text/data/ICPR_text_train_part2_20180313/image_9000'
-test_label_files = '/Users/filick/projects/text/data/train_1000/image_1000'
-test_image_files = '/Users/filick/projects/text/data/train_1000/txt_1000'
+train_label_files = '/data1/fuwang/project/text/data/txt_9000'
+train_image_files = '/data1/fuwang/project/text/data/image_9000'
+test_label_files = '/data1/fuwang/project/text/data/train_1000/image_1000'
+test_image_files = '/data1/fuwang/project/text/data/train_1000/txt_1000'
 
 checkpoints = 'checkpoint/ckpt.pth'
 resume = False

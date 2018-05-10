@@ -35,15 +35,18 @@ def _sort_vertices(vertices):
     min_dist = _euclidean_dist(vertices, xmin, xmax, ymin, ymax)
     best_order = vertices
 
-    for i in range(3):
-        vertices = _counterwise_step(vertices)
+    for i in range(7):
+        if i == 3:
+            vertices = [vertices[0], vertices[1], vertices[6], vertices[7],
+                        vertices[4], vertices[5], vertices[2], vertices[3]]
+        else:
+            vertices = _counterwise_step(vertices)
         dist = _euclidean_dist(vertices, xmin, xmax, ymin, ymax)
         if dist < min_dist:
             min_dist = dist
             best_order = vertices
 
     return best_order
-
 
 
 class TextDataset(data.Dataset):
