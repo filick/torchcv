@@ -26,14 +26,14 @@ from torchcv.transforms import resize_quad, random_distort, random_paste_quad, r
 
 
 img_size = 384
-batch_size = 1
+batch_size = 32
 
 train_label_files = '/data1/fuwang/project/text/data/txt_9000'
 train_image_files = '/data1/fuwang/project/text/data/image_9000'
-test_label_files = '/data1/fuwang/project/text/data/train_1000/image_1000'
-test_image_files = '/data1/fuwang/project/text/data/train_1000/txt_1000'
+test_image_files = '/data1/fuwang/project/text/data/train_1000/image_1000'
+test_label_files = '/data1/fuwang/project/text/data/train_1000/txt_1000'
 
-checkpoints = 'checkpoint/ckpt.pth'
+checkpoint = 'checkpoint/ckpt.pth'
 resume = False
 INPUT_WORKERS = 8
 
@@ -47,10 +47,10 @@ best_loss = float('inf')  # best test loss
 start_epoch = 0  # start from epoch 0 or last epoch
 if resume:
     print('==> Resuming from checkpoint..')
-    checkpoint = torch.load(checkpoints)
-    net.load_state_dict(checkpoint['net'])
-    best_loss = checkpoint['loss']
-    start_epoch = checkpoint['epoch']
+    check = torch.load(checkpoint)
+    net.load_state_dict(check['net'])
+    best_loss = check['loss']
+    start_epoch = check['epoch']
 
 # Dataset
 print('==> Preparing dataset..')
@@ -85,7 +85,7 @@ trainset = TextDataset(img_root = train_image_files,
                        transform=transform_train)
 
 testset = TextDataset(img_root = test_image_files,
-                      label_root = test_image_files,
+                      label_root = test_label_files,
                       transform=transform_test)
 
 trainloader =  data.DataLoader(trainset, batch_size=batch_size,

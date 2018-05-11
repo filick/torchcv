@@ -10,4 +10,4 @@ This is a pytorch implementation of Rotation-Sensitive Regression Detector (RRD,
 - [x] ground truth mapping
 - [x] data augmentation
 - [x] loss function
-- [ ] train/eval scripts
+- [x] train scripts

@@ -26,9 +26,10 @@ class RRDLoss(nn.Module):
         _, rank = idx.sort(1)      # [N,#anchors]
 
         num_neg = 3*pos.long().sum(1)  # [N,]
-        if num_neg.sum().data[0] == 0:
-            num_neg[:] = 10
-        neg = rank < num_neg[:,None]   # [N,#anchors]
+        if num_neg.data.sum() == 0:
+            num_neg += 10
+        #print(num_neg.shape, rank.shape)
+        neg = rank < num_neg.unsqueeze(1) #[:,None]   # [N,#anchors]
         return neg
 
     def forward(self, loc_preds, loc_targets, cls_preds, cls_targets, alpha=0.2):
@@ -45,7 +46,7 @@ class RRDLoss(nn.Module):
         '''
         pos = cls_targets > 0  # [N,#anchors]
         batch_size = pos.size(0)
-        num_pos = pos.sum().data[0]
+        num_pos = pos.data.sum()
 
         #===============================================================
         # loc_loss = SmoothL1Loss(pos_loc_preds, pos_loc_targets)
@@ -64,8 +65,8 @@ class RRDLoss(nn.Module):
         cls_loss[cls_targets<0] = 0  # set ignored loss to 0
         neg = self._hard_negative_mining(cls_loss, pos)  # [N,#anchors]
         cls_loss = cls_loss[pos|neg].sum()
-        num_neg = neg.sum().data[0]
-
+        num_neg = neg.data.sum()
+        # print(num_pos, num_neg)
         locl = loc_loss.data[0]/num_pos if num_pos > 0 else 0
         clsl = cls_loss.data[0]/num_neg
         print('loc_loss: %.3f | cls_loss: %.3f' % (locl, clsl), end=' | ')
