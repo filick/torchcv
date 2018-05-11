@@ -68,7 +68,7 @@ def transform_train(img, boxes, labels):
         transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
     boxes, labels = box_coder.encode(boxes, labels)
-    print(img.shape, boxes.shape, labels.shape)
+    # print(img.shape, boxes.shape, labels.shape)
     return img, boxes, labels
 
 def transform_test(img, boxes, labels):
@@ -111,6 +111,7 @@ def train(epoch):
     net.train()
     train_loss = 0
     for batch_idx, (inputs, loc_targets, cls_targets) in enumerate(trainloader):
+        # print(inputs.shape, loc_targets.shape, cls_targets.shape)
         inputs = Variable(inputs.cuda())
         loc_targets = Variable(loc_targets.cuda())
         cls_targets = Variable(cls_targets.cuda())

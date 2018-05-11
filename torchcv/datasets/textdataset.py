@@ -94,10 +94,10 @@ class TextDataset(data.Dataset):
 
         classes = [0] * len(labels)
         boxes = torch.FloatTensor(boxes)
-        classes = torch.FloatTensor(classes)
+        classes = torch.LongTensor(classes)
 
         if self.transform:
-            image, boxes, labels = self.transform(image, boxes, classes)
+            image, boxes, classes = self.transform(image, boxes, classes)
 
         if self.return_text:
             return image, boxes, classes, labels
