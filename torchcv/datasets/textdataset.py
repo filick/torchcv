@@ -57,6 +57,7 @@ class TextDataset(data.Dataset):
     def __init__(self, img_root, label_root, transform=None, return_text=False):
 
         self.img_root = img_root
+        self.label_root = label_root
         self.transform = transform
         self.return_text = return_text
 
@@ -67,7 +68,7 @@ class TextDataset(data.Dataset):
         for img_id, fname in enumerate(self.fnames):
             bboxes = []
             labels = []
-            for line in open(os.path.join(self.img_root, fname + '.txt'), 'r', encoding='UTF-8').read().splitlines():
+            for line in open(os.path.join(self.label_root, fname + '.txt'), 'r', encoding='UTF-8').read().splitlines():
                 items = line.split(',')
                 bboxes.append(_sort_vertices([float(i) for i in items[:8]]))
                 labels.append(items[-1])
@@ -83,8 +84,8 @@ class TextDataset(data.Dataset):
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        boxes = self.boxes[idx].clone()
-        labels = self.labels[idx].clone()
+        boxes = self.boxes[idx]
+        labels = self.labels[idx]
 
         if self.return_text:
             valid_gen = filter(lambda i: labels[i] != '###', range(len(labels)))
@@ -92,6 +93,8 @@ class TextDataset(data.Dataset):
             labels = [labels[i] for i in labels]
 
         classes = [0] * len(labels)
+        boxes = torch.FloatTensor(boxes)
+        classes = torch.FloatTensor(classes)
 
         if self.transform:
             image, boxes, labels = self.transform(image, boxes, classes)

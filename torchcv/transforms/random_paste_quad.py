@@ -29,5 +29,6 @@ def random_paste_quad(img, boxes, max_ratio=4, fill=0):
     canvas.paste(img, (x,y))
 
     if boxes is not None:
+        # print(boxes, type(boxes))
         boxes = boxes + torch.FloatTensor([x,y,x,y,x,y,x,y])
     return canvas, boxes

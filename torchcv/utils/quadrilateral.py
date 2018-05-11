@@ -23,7 +23,7 @@ def bounding(quad_boxes, order='xyxy'):
     ymin, _ = y.min(1)
     ymax, _ = y.max(1)
 
-    rec = torch.cat([xmin, ymin, xmax, ymax], 1)
+    rec = torch.stack([xmin, ymin, xmax, ymax], 1)
     if order == 'xywh':
         rec = change_box_order(rec, 'xyxy2xywh')
     return rec

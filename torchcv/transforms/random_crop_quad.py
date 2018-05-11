@@ -49,7 +49,7 @@ def random_crop_quad(
         x = random.randrange(imw - w)
         y = random.randrange(imh - h)
 
-        roi = torch.tensor([[x,y,x+w,y+h]], dtype=torch.float)
+        roi = torch.FloatTensor([[x,y,x+w,y+h]])
         ious = box_iou(quads_bound, roi)
         
         if remain_ciou:
@@ -77,9 +77,10 @@ def random_crop_quad(
     mask = (center[:,0]>x) & (center[:,0]<x+w) \
          & (center[:,1]>y) & (center[:,1]<y+h)
     if mask.any():
-        quads = quads[mask] - torch.FloatTensor([x,y,x,y,x,y,x,y])
+        idx = mask.nonzero().squeeze()
+        quads = quads[idx,:] - torch.FloatTensor([x,y,x,y,x,y,x,y])
         quads = quad_clamp(quads,0,0,w,h)
-        labels = labels[mask]
+        labels = labels[idx]
     else:
         quads = torch.FloatTensor([[0,0,0,0,0,0,0,0]])
         labels = torch.LongTensor([0])

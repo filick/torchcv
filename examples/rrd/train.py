@@ -26,7 +26,7 @@ from torchcv.transforms import resize_quad, random_distort, random_paste_quad, r
 
 
 img_size = 384
-batch_size = 32
+batch_size = 1
 
 train_label_files = '/data1/fuwang/project/text/data/txt_9000'
 train_image_files = '/data1/fuwang/project/text/data/image_9000'
@@ -35,7 +35,7 @@ test_image_files = '/data1/fuwang/project/text/data/train_1000/txt_1000'
 
 checkpoints = 'checkpoint/ckpt.pth'
 resume = False
-INPUT_WORKERS = 16
+INPUT_WORKERS = 8
 
 
 # Model
@@ -56,6 +56,7 @@ if resume:
 print('==> Preparing dataset..')
 box_coder = RRDBoxCoder(net)
 def transform_train(img, boxes, labels):
+    # print(type(img), type(boxes), type(labels))
     img = random_distort(img)
     if random.random() < 0.5:
         img, boxes = random_paste_quad(img, boxes, max_ratio=4, fill=(123,116,103))
@@ -67,6 +68,7 @@ def transform_train(img, boxes, labels):
         transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
     boxes, labels = box_coder.encode(boxes, labels)
+    print(img.shape, boxes.shape, labels.shape)
     return img, boxes, labels
 
 def transform_test(img, boxes, labels):

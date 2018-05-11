@@ -25,9 +25,9 @@ class RRDLoss(nn.Module):
         _, idx = cls_loss.sort(1)  # sort by negative losses
         _, rank = idx.sort(1)      # [N,#anchors]
 
-        num_neg = 3*pos.sum(1) or 10  # [N,]
+        num_neg = 3*pos.sum(1)  # [N,]
         neg = rank < num_neg[:,None]   # [N,#anchors]
-        return neg, num_neg
+        return neg
 
     def forward(self, loc_preds, loc_targets, cls_preds, cls_targets, alpha=0.2):
         '''Compute loss between (loc_preds, loc_targets) and (cls_preds, cls_targets).
@@ -43,16 +43,14 @@ class RRDLoss(nn.Module):
         '''
         pos = cls_targets > 0  # [N,#anchors]
         batch_size = pos.size(0)
-        num_pos = pos.sum().item()
+        num_pos = pos.sum().data[0]
 
         #===============================================================
         # loc_loss = SmoothL1Loss(pos_loc_preds, pos_loc_targets)
         #===============================================================
-        if num_pos > 0:
-            mask = pos.unsqueeze(2).expand_as(loc_preds)       # [N,#anchors,8]
-            loc_loss = F.smooth_l1_loss(loc_preds[mask], loc_targets[mask], size_average=False)
-        else:
-            loc_loss = torch.FloatTensor([0])
+        print(pos.shape, loc_preds.shape)
+        mask = pos.unsqueeze(2).expand_as(loc_preds)       # [N,#anchors,8]
+        loc_loss = F.smooth_l1_loss(loc_preds[mask], loc_targets[mask], size_average=False)
 
         #===============================================================
         # cls_loss = CrossEntropyLoss(cls_preds, cls_targets)
@@ -61,9 +59,9 @@ class RRDLoss(nn.Module):
                                    cls_targets.view(-1), reduce=False)  # [N*#anchors,]
         cls_loss = cls_loss.view(batch_size, -1)
         cls_loss[cls_targets<0] = 0  # set ignored loss to 0
-        neg, num_neg = self._hard_negative_mining(cls_loss, pos)  # [N,#anchors]
+        neg = self._hard_negative_mining(cls_loss, pos)  # [N,#anchors]
         cls_loss = cls_loss[pos|neg].sum()
 
-        print('loc_loss: %.3f | cls_loss: %.3f' % (loc_loss.item()/(num_pos + num_neg), cls_loss.item()/(num_pos + num_neg)), end=' | ')
-        loss = (alpha * loc_loss + cls_loss)/(num_pos + num_neg)
+        print('loc_loss: %.3f | cls_loss: %.3f' % (loc_loss.item()/num_pos, cls_loss.item()/num_pos), end=' | ')
+        loss = (alpha * loc_loss + cls_loss)/num_pos
         return loss
