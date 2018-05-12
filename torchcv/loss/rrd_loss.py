@@ -6,9 +6,10 @@ import torch.nn.functional as F
 
 
 class RRDLoss(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, alpha=0.2):
         super(RRDLoss, self).__init__()
         self.num_classes = num_classes
+        self.alpha = alpha
 
     def _hard_negative_mining(self, cls_loss, pos):
         '''Return negative indices that is 3x the number as postive indices.
@@ -32,7 +33,7 @@ class RRDLoss(nn.Module):
         neg = rank < num_neg.unsqueeze(1) #[:,None]   # [N,#anchors]
         return neg
 
-    def forward(self, loc_preds, loc_targets, cls_preds, cls_targets, alpha=0.2):
+    def forward(self, loc_preds, loc_targets, cls_preds, cls_targets):
         '''Compute loss between (loc_preds, loc_targets) and (cls_preds, cls_targets).
 
         Args:
@@ -44,6 +45,8 @@ class RRDLoss(nn.Module):
         loss:
           (tensor) loss = alpha * SmoothL1Loss(loc_preds, loc_targets) + CrossEntropyLoss(cls_preds, cls_targets).
         '''
+        #print(cls_targets.data[0,5000:5020])
+        #print(cls_preds.data[0,5000:5020])
         pos = cls_targets > 0  # [N,#anchors]
         batch_size = pos.size(0)
         num_pos = pos.data.sum()
@@ -67,9 +70,9 @@ class RRDLoss(nn.Module):
         cls_loss = cls_loss[pos|neg].sum()
         num_neg = neg.data.sum()
         # print(num_pos, num_neg)
-        locl = loc_loss.data[0]/num_pos if num_pos > 0 else 0
+        locl = self.alpha * loc_loss.data[0]/num_pos if num_pos > 0 else 0
         clsl = cls_loss.data[0]/num_neg
         print('loc_loss: %.3f | cls_loss: %.3f' % (locl, clsl), end=' | ')
 
-        loss = (alpha * loc_loss + cls_loss)/(num_pos + num_neg) if num_pos > 0 else cls_loss / num_neg
+        loss = (self.alpha * loc_loss + cls_loss)/(num_pos + num_neg) if num_pos > 0 else cls_loss / num_neg
         return loss

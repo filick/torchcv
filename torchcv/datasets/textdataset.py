@@ -12,6 +12,8 @@ import numpy as np
 
 from PIL import Image
 
+Image.MAX_IMAGE_PIXELS = None
+
 
 def _counterwise_step(v):
     return [v[i] for i in range(2,8)] + [v[0], v[1]]
