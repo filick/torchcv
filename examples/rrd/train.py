@@ -31,7 +31,7 @@ train_image_files = '/data1/fuwang/project/text/data/image_9000'
 test_image_files = '/data1/fuwang/project/text/data/train_1000/image_1000'
 test_label_files = '/data1/fuwang/project/text/data/train_1000/txt_1000'
 
-checkpoint = 'checkpoint/ckpt.pth'
+checkpoint = 'checkpoint/ckpt2.pth'
 resume = True
 INPUT_WORKERS = 8
 
@@ -39,34 +39,30 @@ INPUT_WORKERS = 8
 # Model
 print('==> Building model..')
 net = RRD(num_classes=2, input_size=img_size)
-#net = FPNSSD512(num_classes=2)
-#net.load_state_dict(torch.load(args.model))
 best_loss = float('inf')  # best test loss
 start_epoch = 0  # start from epoch 0 or last epoch
 if resume:
     print('==> Resuming from checkpoint..')
     check = torch.load(checkpoint)
     net.load_state_dict(check['net'])
-    best_loss = check['loss']
+    #best_loss = check['loss']
     start_epoch = check['epoch']
 
 # Dataset
 print('==> Preparing dataset..')
 box_coder = RRDBoxCoder(net)
 def transform_train(img, boxes, labels):
-    # print(type(img), type(boxes), type(labels))
     img = random_distort(img)
     if random.random() < 0.5:
         img, boxes = random_paste_quad(img, boxes, max_ratio=4, fill=(123,116,103))
-    img, boxes, labels = random_crop_quad(img, boxes, labels)
+    # img, boxes, labels = random_crop_quad(img, boxes, labels)
     img, boxes = resize_quad(img, boxes, size=(img_size,img_size), random_interpolation=True)
     img, boxes = random_flip_quad(img, boxes)
     img = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
-    boxes, labels = box_coder.encode(boxes, labels)
-    # print(img.shape, boxes.shape, labels.shape)
+    boxes, labels = box_coder.encode(boxes, labels, iou_threshold=0.6)
     return img, boxes, labels
 
 def transform_test(img, boxes, labels):
@@ -100,8 +96,9 @@ lr =1e-4
 momentum=0.9
 weight_decay=5e-4
 
-criterion = RRDLoss(num_classes=2, alpha=3)
+criterion = RRDLoss(num_classes=2, alpha=1, neg_ratio=1)
 optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=weight_decay)
+#optimizer = optim.SGD(net.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum)
 
 # Training
 def train(epoch):

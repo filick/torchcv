@@ -31,7 +31,7 @@ def bounding(quad_boxes, order='xyxy'):
 
 def rec2quad(rec, order='xyxy'):
     if order == 'xywh':
-        rec = change_box_order(rec, 'xyhw2xyxy')
+        rec = change_box_order(rec, 'xywh2xyxy')
 
     return rec[:,[0,1,2,1,2,3,0,3]]
 
@@ -84,7 +84,7 @@ def quad_nms(quads, scores, threshold):
         if order.numel() == 1:
             break
 
-        ovr = torch.tensor([_signle_iou(polys[i], polys[j]) for j in order[1:]])
+        ovr = torch.FloatTensor([_signle_iou(polys[i], polys[j]) for j in order[1:]])
         ids = (ovr<=threshold).nonzero().squeeze()
 
         if ids.numel() == 0:

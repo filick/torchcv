@@ -169,7 +169,7 @@ class RRD(nn.Module):
         xs = self.extractor(x)
         for i, x in enumerate(xs):
             ors = self.or_sensitive[i](x)
-            ors = nn.functional.relu(ors, inplace=True) # do we need this?
+            #ors = nn.functional.relu(ors, inplace=True) # do we need this?
             loc_pred = self.loc_layers[i](ors)
             loc_pred = loc_pred.permute(0,2,3,1).contiguous()
             loc_preds.append(loc_pred.view(loc_pred.size(0),-1,8))

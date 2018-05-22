@@ -136,4 +136,4 @@ def box_nms(bboxes, scores, threshold=0.5, mode='union'):
         if ids.numel() == 0:
             break
         order = order[ids+1]
-    return torch.tensor(keep, dtype=torch.long)
+    return torch.LongTensor(keep)
